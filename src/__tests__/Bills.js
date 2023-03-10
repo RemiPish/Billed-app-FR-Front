@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import { screen, waitFor } from "@testing-library/dom"
+import { screen, waitFor, within } from "@testing-library/dom"
 import BillsUI from "../views/BillsUI.js"
 import Bills from "../containers/Bills.js";
 import { bills } from "../fixtures/bills.js"
@@ -46,6 +46,28 @@ describe("Given I am connected as an employee", () => {
       expect(dates).toEqual(datesSorted)
     })
   })
+  describe("when I click on the New Bill button", () => {
+
+    test("The New bill page should appear", () => {
+      document.body.innerHTML = BillsUI({ data: bills });
+
+      const store = null;
+      const localStorage = window.localStorage;
+
+      let testBills = new Bills({
+        document, onNavigate, store, localStorage
+      });
+
+      const handleClickNewBillTest = jest.fn(() => testBills.handleClickNewBill());
+      const newBillButton = document.querySelector('button[data-testid="btn-new-bill"]');
+
+      newBillButton.addEventListener('click', handleClickNewBillTest);
+      userEvent.click(newBillButton);
+
+      expect(handleClickNewBillTest).toBeCalled();
+    });
+  })
+
   describe("When I am on Bills Page and I click on the eye icon", () => {
     test("Then it should open the image modal", () => {
       document.body.innerHTML = BillsUI({ data: bills })
@@ -76,71 +98,33 @@ describe("Given I am connected as an employee", () => {
     })
   })
 
-  describe("when I click on the New Bill button", () => {
-    test("The New bill page should appear", () => {
-      document.body.innerHTML = BillsUI({ data: bills });
 
-      const store = null;
-      const localStorage = window.localStorage;
-
-      let testBills = new Bills({
-        document, onNavigate, store, localStorage
-      });
-
-      const handleClickNewBillTest = jest.fn(() => testBills.handleClickNewBill());
-      const newBillButton = document.querySelector('button[data-testid="btn-new-bill"]');
-
-      newBillButton.addEventListener('click', handleClickNewBillTest);
-      userEvent.click(newBillButton);
-
-      expect(handleClickNewBillTest).toBeCalled();
-    });
-  })
   // test d'intégration GET
   describe("When I navigate to Bills Page", () => {
-    test("fetches bills from mock API GET", async () => {
+    beforeEach(() => {
+      jest.spyOn(mockStore, "bills")
       Object.defineProperty(window, 'localStorage', { value: localStorageMock })
       window.localStorage.setItem('user', JSON.stringify({
-        type: 'Employee'
+        type: 'Employee', email: 'a@a'
       }))
       const root = document.createElement("div")
       root.setAttribute("id", "root")
       document.body.append(root)
       router()
-      window.onNavigate(ROUTES_PATH.Bills)
+    });
+    test("fetches bills from mock API GET", async () => {
 
-      let mockedBillBillsTest = jest.fn(() => mockedBill.bills())
-      let mockedBillListTest = jest.fn(() => mockedBill.list())
+      window.onNavigate(ROUTES_PATH.Bills);
 
-      const bills = new Bills({ document, onNavigate, store: mockStore, localStorage })
-      bills.getBills().then(async data => {
-        root.innerHTML = BillsUI({ data })
-        const title = await screen.getByText("Mes Notes de frais")
-        expect(title).toBeTruthy()
-        expect(mockedBillBillsTest).toBeCalled()
-        expect(mockedBillListTest).toBeCalled()
-        expect(document.querySelector('tbody').rows.length).toBe(4);
-      })
+      await waitFor(() => screen.getByText("Mes notes de frais"));
+      const table = screen.getByTestId("tbody");
+
+      expect(screen.getByText("Mes notes de frais")).toBeTruthy();
+      expect(table.querySelectorAll("tr").length).toBe(4);
     })
   })
 
   describe("When an error occurs on API", () => {
-    beforeEach(() => {
-      jest.spyOn(mockStore, "bills")
-      Object.defineProperty(
-        window,
-        'localStorage',
-        { value: localStorageMock }
-      )
-      window.localStorage.setItem('user', JSON.stringify({
-        type: 'Employee',
-        email: "a@a"
-      }))
-      const root = document.createElement("div")
-      root.setAttribute("id", "root")
-      document.body.appendChild(root)
-      router()
-    })
     test("fetches bills from an API and fails with 404 message error", async () => {
 
       mockStore.bills.mockImplementationOnce(() => {
