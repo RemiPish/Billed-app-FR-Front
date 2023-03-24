@@ -24,7 +24,8 @@ export default class NewBill {
     const extension = fileName.split('.').pop()
     if (extension === 'png' || extension === 'jpeg' || extension === 'jpg') {
 
-      this.document.getElementById('wrong-extension').style.display = "none";
+      this.document.getElementById('wrong-extension').classList.add('right-extension');
+      this.document.getElementById('wrong-extension').classList.remove('wrong-extension');
       const email = JSON.parse(localStorage.getItem("user")).email
       formData.append('file', file)
       formData.append('email', email)
@@ -46,8 +47,8 @@ export default class NewBill {
     }
     else {
       this.document.querySelector(`input[data-testid="file"]`).value = null;
-      this.document.getElementById('wrong-extension').style.display = "block";
-      window.alert("Votre fichier doit être de l'extension .png, .jpeg ou .jpg!");
+      this.document.getElementById('wrong-extension').classList.add('wrong-extension');
+      this.document.getElementById('wrong-extension').classList.remove('right-extension');
     }
   }
 

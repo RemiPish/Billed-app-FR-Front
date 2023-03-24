@@ -46,7 +46,7 @@ export default class {
               // log the error and return unformatted date in that case
               console.log(e, 'for', doc)
 
-              doc.date = formatDate(doc.date),
+              doc.date,
                 doc.status = formatStatus(doc.status)
 
             }
