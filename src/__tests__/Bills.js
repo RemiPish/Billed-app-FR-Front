@@ -115,12 +115,22 @@ describe("Given I am connected as an employee", () => {
     test("fetches bills from mock API GET", async () => {
 
       window.onNavigate(ROUTES_PATH.Bills);
+      const bills = new Bills({
+        document,
+        onNavigate,
+        store: mockStore,
+        localStorage,
+      });
+      bills.getBills().then(async (data) => {
+        root.innerHTML = BillsUI({ data });
+        await waitFor(() => screen.getByText("Mes notes de frais"));
+        const table = screen.getByTestId("tbody");
+  
+        expect(screen.getByText("Mes notes de frais")).toBeTruthy();
+        expect(table.querySelectorAll("tr").length).toBe(4);
+      });
 
-      await waitFor(() => screen.getByText("Mes notes de frais"));
-      const table = screen.getByTestId("tbody");
-
-      expect(screen.getByText("Mes notes de frais")).toBeTruthy();
-      expect(table.querySelectorAll("tr").length).toBe(4);
+      
     })
   })
 

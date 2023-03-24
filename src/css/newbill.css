@@ -67,7 +67,11 @@ select:focus {
 }
 
 .wrong-extension {
-  display: none;
+  display: block;
   color: #ff7800;
+}
+
+.right-extension {
+  display: none;
 }
 
