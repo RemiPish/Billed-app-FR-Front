@@ -11,7 +11,7 @@ import { localStorageMock } from "../__mocks__/localStorage.js";
 
 import BillsUI from "../views/BillsUI.js";
 import router from "../app/Router.js";
-import store from "../__mocks__/store.js";
+import mockStore from "../__mocks__/store"
 import userEvent from '@testing-library/user-event'
 import '@testing-library/jest-dom/extend-expect'
 
@@ -41,16 +41,43 @@ describe("Given I am connected as an employee", () => {
 
     })
   })
-  describe("When I fill the form", () => {
-    describe("When the file extension is correct", () => {
-      test("Then the file is accepted", async () => {
 
-        const html = NewBillUI();
-        document.body.innerHTML = html;
-        const newBill = new NewBill({ document, onNavigate, store, localStorage: window.localStorage })
+  describe("When I fill the form", () => {
+    describe("When the file extension is not correct", () => {
+      test("Then the file is not accepted", async () => {
+        document.body.innerHTML = NewBillUI();
+        const newBill = new NewBill({ document, onNavigate, store: mockStore, localStorage: window.localStorage })
+        const errorMessage = screen.getByTestId("wrong-extension");
         const handleChangeFile = jest.fn((e) => newBill.handleChangeFile(e))
         const formFileInput = screen.getByTestId('file');
         formFileInput.addEventListener('change', handleChangeFile);
+
+
+        fireEvent.change(formFileInput, {
+          target: {
+            files: [new File(['test.txt'], 'test.txt', {
+              type: 'image/txt'
+            })],
+          }
+        })
+
+        expect(handleChangeFile).toHaveBeenCalled()
+        expect(formFileInput.files[0].name).toBe('test.txt');
+
+        const rightExtension = errorMessage.classList.contains('right-extension')
+        const wrongExtension = errorMessage.classList.contains('wrong-extension')
+        expect(wrongExtension).toBeTruthy();
+        expect(rightExtension).toBeFalsy();
+      })
+    })
+    describe("When the file extension is correct", () => {
+      test("Then the file is accepted", async () => {
+        document.body.innerHTML = NewBillUI();
+        const newBill = new NewBill({ document, onNavigate, store: mockStore, localStorage: window.localStorage })
+        const errorMessage = screen.getByTestId("wrong-extension");
+        const handleChangeFileJest = jest.fn((e) => newBill.handleChangeFile(e))
+        const formFileInput = screen.getByTestId('file');
+        formFileInput.addEventListener('change', handleChangeFileJest);
 
 
         fireEvent.change(formFileInput, {
@@ -61,65 +88,20 @@ describe("Given I am connected as an employee", () => {
           }
         })
 
-        expect(handleChangeFile).toHaveBeenCalled()
+        expect(handleChangeFileJest).toHaveBeenCalled()
         expect(formFileInput.files[0].name).toBe('test.png');
 
-
+        const rightExtension = errorMessage.classList.contains('right-extension')
+        const wrongExtension = errorMessage.classList.contains('wrong-extension')
+        expect(wrongExtension).toBeFalsy();
+        expect(rightExtension).toBeTruthy();
       })
       test("Then the form can be submitted", () => {
-        const html = NewBillUI();
-        document.body.innerHTML = html;
-        const newBill = new NewBill({ document, onNavigate, store: null, localStorage: window.localStorage })
-        const errorMessage = screen.getByTestId("wrong-extension");
-        const handleSubmit = jest.fn((e) => newBill.handleSubmit(e))
-        const submit = screen.getByTestId('form-new-bill');
-        submit.addEventListener('submit', handleSubmit);
-        const rightExtension = errorMessage.classList.contains('right-extension')
-        const wrongExtension = errorMessage.classList.contains('wrong-extension')
-        expect(rightExtension).toBeTruthy();
-        expect(wrongExtension).toBeFalsy();
+        const newBill = new NewBill({ document, onNavigate, store: mockStore, localStorage: window.localStorage })
+        const handleSubmitJest = jest.fn((e) => newBill.handleSubmit(e))
+        const form = screen.getByTestId("form-new-bill");
+        form.addEventListener("submit", handleSubmitJest);
 
-        fireEvent.submit(submit)
-        expect(handleSubmit).toHaveBeenCalled();
-
-      })
-    })
-  })
-  describe("When I fill the form", () => {
-    describe("When the file extension is not correct", () => {
-      test("Then the file is not accepted", async () => {
-        const html = NewBillUI();
-        document.body.innerHTML = html;
-        const newBill = new NewBill({ document, onNavigate, store: null, localStorage: window.localStorage })
-        const handleChangeFile = jest.fn((e) => newBill.handleChangeFile(e))
-        const input = screen.getByTestId('file');
-        input.addEventListener('change', handleChangeFile);
-
-        fireEvent.change(input, {
-          target: {
-            files: [new File(['test.txt'], 'test.txt', {
-              type: 'image/txt'
-            })],
-          }
-        })
-        const errorMessage = screen.getByTestId("wrong-extension");
-        expect(handleChangeFile).toHaveBeenCalled()
-        expect(input.files[0].name).toBe('test.txt');
-
-        expect(handleChangeFile).toHaveBeenCalled();
-        const rightExtension = errorMessage.classList.contains('right-extension')
-        const wrongExtension = errorMessage.classList.contains('wrong-extension')
-        expect(wrongExtension).toBeTruthy();
-        expect(rightExtension).toBeFalsy();
-      })
-    })
-  })
-
-  // test d'intégration POST
-  describe("Given I am a user connected as Employee", () => {
-    describe("When I add a new bill", () => {
-      test("Then it creates a new bill", () => {
-        document.body.innerHTML = NewBillUI()
 
         const inputExpenseName = screen.getByTestId('expense-name')
         const inputExpenseType = screen.getByTestId('expense-type')
@@ -128,8 +110,7 @@ describe("Given I am connected as an employee", () => {
         const inputVAT = screen.getByTestId('vat')
         const inputPCT = screen.getByTestId('pct')
         const inputCommentary = screen.getByTestId('commentary')
-        const inputFile = screen.getByTestId('file')
-
+        const formFileInput = screen.getByTestId('file');
 
         fireEvent.change(inputExpenseType, {
           target: { value: "Transports" },
@@ -164,23 +145,97 @@ describe("Given I am connected as an employee", () => {
         fireEvent.change(inputCommentary, {
           target: { value: "blabla" },
         })
-        expect(inputCommentary.value).toBe("blabla")
 
-        userEvent.upload(inputFile, new File(['test'], 'test.png', { type: 'image/png' }))
-        expect(inputFile.files[0].name).toBe('test.png');
-        expect(inputFile.files).toHaveLength(1)
+        fireEvent.change(formFileInput, {
+          target: {
+            files: [new File(['test.png'], 'test.png', {
+              type: 'image/png'
+            })],
+          }
+        })
+
+        const submitBtn = document.getElementById('btn-send-bill');
+        userEvent.click(submitBtn);
+
+        expect(handleSubmitJest).toHaveBeenCalled();
+        expect(screen.getAllByText("Mes notes de frais")).toBeTruthy();
       })
-      test("Then it fails with a 404 message error", async () => {
-        const html = BillsUI({ error: 'Erreur 404' })
-        document.body.innerHTML = html;
-        const message = await screen.getByText(/Erreur 404/);
-        expect(message).toBeTruthy();
+    })
+  })
+
+  // test d'intégration POST
+  describe("Given I am a user connected as Employee", () => {
+    describe("When I add a new bill", () => {
+      test("Then the new bill is added ", async () => {
+        const billsSpy = jest.spyOn(mockStore, "bills");
+        let newBill = {
+          id : "dsfosdkfmlsdkvxck",
+          email: "a@a",
+          type: "Transports",
+          name: "transports",
+          amount: "50",
+          date: "2023-03-31",
+          vat: "70",
+          pct: "20",
+          commentary: "POST bill",
+          fileUrl: "https://test.storage.tld/v0/b/test.jpg",
+          fileName: "test.jpg",
+          status: "pending",
+        };
+
+        
+        let bills = await mockStore.bills().create(newBill)
+        expect(billsSpy).toHaveBeenCalled();
+        expect(bills.length).toBe(5)
+
       })
-      test("Then it fails with a 500 message error", async () => {
-        const html = BillsUI({ error: 'Erreur 500' })
-        document.body.innerHTML = html;
-        const message = await screen.getByText(/Erreur 500/);
-        expect(message).toBeTruthy();
+      describe("When an error occurs on API", () => {
+        beforeEach(() => {
+          jest.spyOn(mockStore, 'bills')
+          Object.defineProperty(
+            window,
+            'localStorage',
+            { value: localStorageMock }
+          )
+          window.localStorage.setItem('user', JSON.stringify({
+            type: 'Employee',
+            email: 'a@a'
+          }))
+          const root = document.createElement('div')
+          root.setAttribute('id', 'root')
+          document.body.appendChild(root)
+          router()
+        })
+        test("fetches bills from an API and fails with 404 message error", async () => {
+
+          mockStore.bills.mockImplementationOnce(() => {
+            return {
+              list: () => {
+                return Promise.reject(new Error("Erreur 404"))
+              }
+            }
+          })
+          const errorHtml = BillsUI({ error: "Erreur 404" })
+          document.body.innerHTML = errorHtml
+          const message = await screen.getByText(/Erreur 404/)
+          expect(message).toBeTruthy()
+        })
+
+        test("fetches messages from an API and fails with 500 message error", async () => {
+
+          mockStore.bills.mockImplementationOnce(() => {
+            return {
+              list: () => {
+                return Promise.reject(new Error("Erreur 500"))
+              }
+            }
+          })
+
+          const errorHtml = BillsUI({ error: "Erreur 500" })
+          document.body.innerHTML = errorHtml
+          const message = await screen.getByText(/Erreur 500/)
+          expect(message).toBeTruthy()
+        })
       })
     })
   })

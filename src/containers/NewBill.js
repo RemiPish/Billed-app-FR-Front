@@ -18,10 +18,11 @@ export default class NewBill {
   handleChangeFile = e => {
     e.preventDefault()
     const file = this.document.querySelector(`input[data-testid="file"]`).files[0]
-    const filePath = e.target.value.split(/\\/g)
+    const filePath = file.name.split(/\\/g)
     const fileName = filePath[filePath.length - 1]
     const formData = new FormData()
     const extension = fileName.split('.').pop()
+
     if (extension === 'png' || extension === 'jpeg' || extension === 'jpg') {
 
       this.document.getElementById('wrong-extension').classList.add('right-extension');
@@ -39,7 +40,6 @@ export default class NewBill {
           }
         })
         .then(({ fileUrl, key }) => {
-          console.log(fileUrl)
           this.billId = key
           this.fileUrl = fileUrl
           this.fileName = fileName

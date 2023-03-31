@@ -34,6 +34,8 @@ describe("Given I am connected as an employee", () => {
       window.onNavigate(ROUTES_PATH.Bills)
       await waitFor(() => screen.getByTestId('icon-window'))
       const windowIcon = screen.getByTestId('icon-window')
+      //console.log(document.body.innerHTML)
+      //screen.debug(windowIcon)
       const activeIcon = windowIcon.classList.contains('active-icon')
       expect(activeIcon).toBeTruthy();
 
@@ -46,37 +48,12 @@ describe("Given I am connected as an employee", () => {
       expect(dates).toEqual(datesSorted)
     })
   })
-  describe("when I click on the New Bill button", () => {
-
-    test("The New bill page should appear", () => {
-      document.body.innerHTML = BillsUI({ data: bills });
-
-      const store = null;
-      const localStorage = window.localStorage;
-
-      let testBills = new Bills({
-        document, onNavigate, store, localStorage
-      });
-
-      const handleClickNewBillTest = jest.fn(() => testBills.handleClickNewBill());
-      const newBillButton = document.querySelector('button[data-testid="btn-new-bill"]');
-
-      newBillButton.addEventListener('click', handleClickNewBillTest);
-      userEvent.click(newBillButton);
-
-      expect(handleClickNewBillTest).toBeCalled();
-    });
-  })
-
   describe("When I am on Bills Page and I click on the eye icon", () => {
     test("Then it should open the image modal", () => {
+      
       document.body.innerHTML = BillsUI({ data: bills })
-
-      const store = null;
-      const localStorage = window.localStorage;
-
       let testBills = new Bills({
-        document, onNavigate, store, localStorage
+        document, onNavigate, store: mockStore, localStorage: window.localStorage
       });
 
       let iconEye = document.querySelector('div[data-testid="icon-eye"]');
@@ -85,19 +62,37 @@ describe("Given I am connected as an employee", () => {
       const handleClickIconEyeTest = jest.fn(() =>
         testBills.handleClickIconEye(iconEye)
       );
-
       $.fn.modal = jest.fn();
 
       iconEye.addEventListener('click', handleClickIconEyeTest);
-
-
       userEvent.click(iconEye);
 
       expect(handleClickIconEyeTest).toBeCalled();
       expect(imageModal).toBeTruthy();
     })
   })
+  
+  describe("when I click on the New Bill button", () => {
+    test("The New bill page should appear", () => {
+      document.body.innerHTML = BillsUI({ data: bills });
+      let testBills = new Bills({
+        document, onNavigate, store: mockStore, localStorage: window.localStorage
+      });
+      const handleClickNewBillTest = jest.fn(() => testBills.handleClickNewBill());
+      const newBillButton = document.querySelector('button[data-testid="btn-new-bill"]');
 
+      newBillButton.addEventListener('click', handleClickNewBillTest);
+      userEvent.click(newBillButton);
+
+      //console.log(document.body.innerHTML)
+      const newBillTitle = screen.getAllByText("Envoyer une note de frais");
+      const formNewBill = screen.getByTestId("form-new-bill")
+      
+      expect(handleClickNewBillTest).toBeCalled();
+      expect(newBillTitle).toBeTruthy();
+      expect(formNewBill).toBeTruthy();
+    });
+  })
 
   // test d'intégration GET
   describe("When I navigate to Bills Page", () => {
@@ -128,9 +123,7 @@ describe("Given I am connected as an employee", () => {
   
         expect(screen.getByText("Mes notes de frais")).toBeTruthy();
         expect(table.querySelectorAll("tr").length).toBe(4);
-      });
-
-      
+      });   
     })
   })
 
